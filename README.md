@@ -81,7 +81,7 @@ twenties-discord-banner/
 ## Community
 
 Want to see it in action or have feedback?  
-Join our server: [here](https://discord.com/invite/mggbZgHCY8](https://discord.com/invite/mggbZgHCY8)
+Join our server: [here](https://discord.com/invite/mggbZgHCY8)
 
 ---
 
