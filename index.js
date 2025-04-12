@@ -11,7 +11,7 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages]
 });
 
-const bannerFolder = './banners';
+const bannerFolder = './banner';  // Changed to singular "banner"
 let banners = fs.readdirSync(bannerFolder);
 
 client.once('ready', () => {
