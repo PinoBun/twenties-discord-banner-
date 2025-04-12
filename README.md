@@ -1,5 +1,5 @@
 
-# Twenties Discord Banner Bot
+# Twenties [Discord](https://discord.com/invite/mggbZgHCY8) Banner Bot
 
 A minimal and powerful bot that automatically updates your Discord server banner every 35 minutes. Ideal for aesthetic-focused communities that want to keep their server fresh and engaging without manual updates.
 
