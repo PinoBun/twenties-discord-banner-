@@ -1,98 +1,71 @@
-const { Client, GatewayIntentBits } = require('discord.js')
-const cron = require('node-cron')
-const fs = require('fs')
-const path = require('path')
+const { Client, GatewayIntentBits, Permissions } = require('discord.js');
+const cron = require('node-cron');
+const fs = require('fs');
+const path = require('path');
 
-// Access Railway environment variables
-const token = process.env.TOKEN         // Your bot token
-const guildId = process.env.GUILD_ID   // Your guild ID (server)
-const ownerId = process.env.OWNER_ID   // Your Discord user ID
-const bannerFolder = './banners'
+const token = process.env.TOKEN;
+const guildId = process.env.GUILD_ID;
+const ownerId = process.env.OWNER_ID;  // The user ID of the bot owner (can be yourself)
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent]
-})
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages]
+});
 
-let banners = fs.readdirSync(bannerFolder)
+const bannerFolder = './banners';
+let banners = fs.readdirSync(bannerFolder);
 
 client.once('ready', () => {
-  console.log(`Logged in as ${client.user.tag}`)
+  console.log(`Logged in as ${client.user.tag}`);
 
-  // Auto change banner every 40 minutes
   cron.schedule('*/40 * * * *', async () => {
-    const maxRetries = 3
-    let attempt = 0
-    let success = false
+    try {
+      const guild = await client.guilds.fetch(guildId);
+      const botMember = await guild.members.fetch(client.user.id);
 
-    while (attempt < maxRetries && !success) {
-      try {
-        const guild = await client.guilds.fetch(guildId)
+      // Log bot's permissions to check if "Manage Server" is available
+      console.log('Bot Permissions:', botMember.permissions.toArray());
 
-        const supportsGif = guild.premiumTier === 3
-        const allowedExtensions = supportsGif
-          ? ['.png', '.jpg', '.jpeg', '.gif']
-          : ['.png', '.jpg', '.jpeg']
-
-        banners = fs.readdirSync(bannerFolder).filter(file =>
-          allowedExtensions.includes(path.extname(file).toLowerCase())
-        )
-
-        if (banners.length === 0) {
-          console.warn('No valid banners found')
-          return
-        }
-
-        const randomBanner = banners[Math.floor(Math.random() * banners.length)]
-        const imagePath = path.join(bannerFolder, randomBanner)
-
-        await guild.setBanner(fs.readFileSync(imagePath))
-        console.log(`Updated banner to ${randomBanner}`)
-        success = true
-      } catch (err) {
-        attempt++
-        console.error(`Attempt ${attempt} failed:`, err)
-        if (attempt < maxRetries) {
-          console.log('Retrying...')
-        } else {
-          console.log('All attempts failed. Skipping this cycle.')
-        }
+      // Ensure bot has the MANAGE_GUILD permission
+      if (!botMember.permissions.has(Permissions.FLAGS.MANAGE_GUILD)) {
+        console.log("Bot doesn't have the MANAGE_GUILD permission.");
+        return;
       }
-    }
-  })
 
-  // Listen for the !!change command
+      const randomBanner = banners[Math.floor(Math.random() * banners.length)];
+      const imagePath = path.join(bannerFolder, randomBanner);
+
+      await guild.setBanner(fs.readFileSync(imagePath));
+      console.log(`Updated banner to ${randomBanner}`);
+    } catch (err) {
+      console.error('Error changing banner:', err.message);
+    }
+  });
+
+  // Listen for the !!change command to manually trigger a banner change
   client.on('messageCreate', async (message) => {
-    if (message.author.bot) return
-
-    if (message.content === '!!change' && message.author.id === ownerId) {
+    if (message.content.toLowerCase() === '!!change' && message.author.id === ownerId) {
       try {
-        const guild = await client.guilds.fetch(guildId)
+        const guild = await client.guilds.fetch(guildId);
+        const botMember = await guild.members.fetch(client.user.id);
 
-        const supportsGif = guild.premiumTier === 3
-        const allowedExtensions = supportsGif
-          ? ['.png', '.jpg', '.jpeg', '.gif']
-          : ['.png', '.jpg', '.jpeg']
-
-        banners = fs.readdirSync(bannerFolder).filter(file =>
-          allowedExtensions.includes(path.extname(file).toLowerCase())
-        )
-
-        if (banners.length === 0) {
-          message.reply('no valid banners found')
-          return
+        // Check if bot has the necessary permissions to change banner
+        if (!botMember.permissions.has(Permissions.FLAGS.MANAGE_GUILD)) {
+          console.log("Bot doesn't have the MANAGE_GUILD permission.");
+          return;
         }
 
-        const randomBanner = banners[Math.floor(Math.random() * banners.length)]
-        const imagePath = path.join(bannerFolder, randomBanner)
+        const randomBanner = banners[Math.floor(Math.random() * banners.length)];
+        const imagePath = path.join(bannerFolder, randomBanner);
 
-        await guild.setBanner(fs.readFileSync(imagePath))
-        message.reply(`banner changed to **${randomBanner}**`)
+        await guild.setBanner(fs.readFileSync(imagePath));
+        message.reply(`Banner changed to ${randomBanner}`);
+        console.log(`Manually updated banner to ${randomBanner}`);
       } catch (err) {
-        console.error('Error during manual banner change:', err)
-        message.reply('failed to change banner')
+        console.error('Error manually changing banner:', err.message);
+        message.reply('Failed to change banner. Please check logs.');
       }
     }
-  })
-})
+  });
+});
 
-client.login(token)
+client.login(token);
