@@ -50,11 +50,16 @@ client.once('ready', () => {
   })
 })
 
-// Manual commands
+// Manual commands (admin or owner only)
 client.on('messageCreate', async (message) => {
   const content = message.content.toLowerCase()
 
-  if (message.author.id !== ownerId) return
+  if (!message.guild || message.author.bot) return
+
+  const isOwner = message.author.id === ownerId
+  const isAdmin = message.member.permissions.has(PermissionsBitField.Flags.Administrator)
+
+  if (!isOwner && !isAdmin) return
 
   // !!change - Random banner now
   if (content === '!!change') {
