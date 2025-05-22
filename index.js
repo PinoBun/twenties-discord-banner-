@@ -64,7 +64,7 @@ client.on('messageCreate', async (message) => {
   // !!change - Random banner now
   if (content === '!!change') {
     await changeBanner()
-    return message.reply('✅ Banner changed manually (random)')
+    return message.reply('✅ Banner changed manually :) (random)')
   }
 
   // !!banner <number> - Set specific banner
